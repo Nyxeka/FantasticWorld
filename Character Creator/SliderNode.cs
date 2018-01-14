@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Linq;
 namespace nyxeka
 {
 
@@ -29,33 +30,17 @@ namespace nyxeka
             customName = newName;
 
         }
-
-        public List<SliderIndexInfo> GetCompleteSliderList()
+        
+        internal List<Slider> CreateAndReturnCompleteSliderList()
         {
 
-            List<SliderIndexInfo> newList = new List<SliderIndexInfo>();
+            List<Slider> newList = new List<Slider>();
 
             // build the list:
 
+            newList = sliderList.Values.ToList();
 
-            var enumeratorTwo = sliderList.GetEnumerator();
-            try
-            {
-                while (enumeratorTwo.MoveNext())
-                {
-                    Slider value = enumeratorTwo.Current.Value;
-                    string key = enumeratorTwo.Current.Key;
 
-                    SliderIndexInfo tmp = new SliderIndexInfo(value.dir, value.sliderID, value.sliderValue);
-
-                    newList.Add(tmp);
-
-                }
-            }
-            finally
-            {
-                enumeratorTwo.Dispose();
-            }
 
             var enumerator = sliderNodeList.GetEnumerator();
             try
@@ -70,7 +55,7 @@ namespace nyxeka
 
 
                     //create the list from each subnode
-                    List<SliderIndexInfo> listFromNode = value.GetCompleteSliderList();
+                    List<Slider> listFromNode = value.CreateAndReturnCompleteSliderList();
 
                     // then, add the objects from the list to our big list.
                     for (int i = 0; i < listFromNode.Count; i++)
@@ -86,10 +71,7 @@ namespace nyxeka
             {
                 enumerator.Dispose();
             }
-
-
-
-
+            
             return newList;
 
         }
@@ -143,7 +125,7 @@ namespace nyxeka
 
         }
 
-        public void SetSliderAtDir(SliderIndexInfo sliderIndex, int level = 0)
+        public void SetSliderAtDir(Slider sliderIndex, int level = 0)
         {
 
             // get the DIR, the ID of the slider, and the value of the slider.
@@ -172,7 +154,7 @@ namespace nyxeka
                 if (sliderNodeList.TryGetValue(sliderIndex.sliderID, out outValue))
                 {
 
-                    outValue.SetSliderValue(sliderIndex.sliderID, sliderIndex.value);
+                    outValue.SetSliderValue(sliderIndex.sliderID, sliderIndex.sliderValue);
 
                 }
 

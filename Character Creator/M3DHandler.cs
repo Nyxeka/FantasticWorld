@@ -89,9 +89,7 @@ namespace nyxeka
 
                 }
             }
-
             return false;
-
         }
 
         public static void UpdateSlider(string sliderID, float value)
@@ -103,6 +101,7 @@ namespace nyxeka
                     if (instance.manager.coreMorphs.morphLookup.ContainsKey(sliderID))
                     {
                         instance.manager.SetBlendshapeValue(sliderID, value);
+                        
                         //print("updated slider value under: " + instance.transform.root.name);
                     }
                 }

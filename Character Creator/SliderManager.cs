@@ -9,7 +9,7 @@ namespace nyxeka
     public class SliderManager : MonoBehaviour
     {
 
-        protected static SliderManager mInstance;
+        public static SliderManager mInstance;
 
         public SliderTree tree;
 
@@ -23,7 +23,7 @@ namespace nyxeka
 
         public void InitSliderManager(SliderGUIHandler sliderGUIHandler, DatabaseReader dbReader)
         {
-            
+
             this.sliderGUIHandler = sliderGUIHandler;
             this.dbReader = dbReader;
 
@@ -34,7 +34,7 @@ namespace nyxeka
 
         void InitSliderGUIHandler()
         {
-            
+
             tree = dbReader.GetDefaultSliderTree(); //works for now.
 
             if (tree == null)
@@ -43,6 +43,8 @@ namespace nyxeka
                 tree = dbReader.GetSliderTree(Application.dataPath + "/../Characters/backup.fwc");
 
             }
+
+            tree.UpdateCompleteSliderList();
 
             sliderGUIHandler.SetTree(tree);
 
@@ -59,6 +61,7 @@ namespace nyxeka
 
         }
 
+
         void Awake()
         {
             mInstance = this;
@@ -69,12 +72,28 @@ namespace nyxeka
             mInstance = null;
         }
 
-        public static void UpdateSlider(string sliderID, float newValue)
+        public static void UpdateSlider(string sliderID, float newValue, int index)
         {
             if (mInstance != null)
             {
-                mInstance.UpdateM3D(sliderID, newValue);
+                mInstance.tree.GetCompleteSliderList()[index].sliderValue = newValue;
+                M3DHandler.UpdateSlider(sliderID, newValue);
             }
+        }
+
+        public static bool UpdateSliderCheck(string sliderID, float value, int index)
+        {
+            if (mInstance != null)
+            {
+                if(M3DHandler.UpdateSliderCheck(sliderID, value))
+                {
+                    mInstance.tree.GetCompleteSliderList()[index].sliderValue = value;
+                    return true;
+                }
+                
+            }
+
+            return false;
         }
 
         public void UpdateM3D(string sliderID, float newValue)
@@ -98,11 +117,12 @@ namespace nyxeka
 
         IEnumerator UpdateMorphs()
         {
-            //slowly update all character morphs. 
-            List<SliderIndexInfo> sliderList = tree.GetCompleteSliderList();
+            //slowly update all character morphs.
+            
+            List<Slider> sliderList = tree.GetCompleteSliderList();
 
             Debug.Log("Loading Morphs from File. Slider Count: " + sliderList.Count.ToString());
-
+            PublicLoadingBar.AddNewStuff(sliderList.Count, 10);
             if (!busy)
             {
                 busy = true;
@@ -111,11 +131,11 @@ namespace nyxeka
                 for (int i = 0; i < sliderList.Count; i++)
                 {
 
-                    Type sliderType = sliderList[i].value.GetType();
+                    Type sliderType = sliderList[i].sliderValue.GetType();
 
                     if (sliderType == typeof(float) || sliderType == typeof(int) || sliderType == typeof(System.Single))
                     {
-                        if (M3DHandler.UpdateSliderCheck(sliderList[i].sliderID, (float)sliderList[i].value))
+                        if (M3DHandler.UpdateSliderCheck(sliderList[i].sliderID, (float)sliderList[i].sliderValue))
                         {
 
                             count++;
@@ -125,11 +145,11 @@ namespace nyxeka
                     }
                     if (count > batchSize)
                     {
-
+                        count = 0;// reset the count for the next iteration.
                         yield return null;
 
                     }
-
+                    PublicLoadingBar.UpdateProgress(1);
                     //can also check for things like "colours" and stuff like that, once we get more complicated.
 
                 }
@@ -150,6 +170,11 @@ namespace nyxeka
 
         }
 
+        public static void SaveCurrentCharacter()
+        {
+            mInstance.SaveMorphs();
+        }
+
         public void SaveMorphs()
         {
             if (!busy)
@@ -159,7 +184,11 @@ namespace nyxeka
                 if (tree != null)
                 {
                     if (tree.sliderNodeList.Count > 0)
+                    {
+                        PublicLoadingBar.AddNewStuff(1, 5);
                         dbReader.SaveSliderTree(tree);
+                        PublicLoadingBar.UpdateProgress(1);
+                    }
 
                     Debug.Log("<color=blue> Successfully saved character to file.</color>");
                 }

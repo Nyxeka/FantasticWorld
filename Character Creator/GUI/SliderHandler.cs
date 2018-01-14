@@ -23,6 +23,9 @@ namespace nyxeka
 
         public ModifyWindow parentWindow;
 
+        public int indexInTreeList = 0;
+        public int negativeValueIndex = 0;
+
         private void Start()
         {
 
@@ -46,6 +49,12 @@ namespace nyxeka
         public void Hide()
         {
             gameObject.SetActive(false);
+        }
+
+        public void SetLockState(bool locked)
+        {
+            if (locked) Lock();
+            else Unlock();
         }
 
         public void Lock()
@@ -82,6 +91,13 @@ namespace nyxeka
             return this;
         }
 
+        public SliderHandler SetIndexInTreeList(int newIndex, int newNegativeIndex = 0)
+        {
+            indexInTreeList = newIndex;
+            negativeValueIndex = newNegativeIndex;
+            return this;
+        }
+
         void UpdateM3DSlider(float value)
         {
             //print("attempting to update slider value...");
@@ -90,21 +106,21 @@ namespace nyxeka
             {
                 if (value < 0)
                 {
-                    M3DHandler.UpdateSliderCheck(sliderID, 0);
-                    M3DHandler.UpdateSlider(sliderID + M3DHandler._neg, Mathf.Abs(value*100));
+                    SliderManager.UpdateSliderCheck(sliderID, 0, indexInTreeList);
+                    SliderManager.UpdateSlider(sliderID + M3DHandler._neg, Mathf.Abs(value*100), negativeValueIndex);
                 } else if (value > 0)
                 {
-                    M3DHandler.UpdateSlider(sliderID, value*100);
-                    M3DHandler.UpdateSliderCheck(sliderID + M3DHandler._neg, 0);
+                    SliderManager.UpdateSlider(sliderID, value*100, indexInTreeList);
+                    SliderManager.UpdateSliderCheck(sliderID + M3DHandler._neg, 0, negativeValueIndex);
                 }
                 else//if value == 0
                 {
-                    M3DHandler.UpdateSliderCheck(sliderID, 0);
-                    M3DHandler.UpdateSliderCheck(sliderID + M3DHandler._neg, 0);
+                    SliderManager.UpdateSliderCheck(sliderID, 0, indexInTreeList);
+                    SliderManager.UpdateSliderCheck(sliderID + M3DHandler._neg, 0, negativeValueIndex);
                 }
             } else
             {
-                M3DHandler.UpdateSlider(sliderID, value * 100);
+                SliderManager.UpdateSlider(sliderID, value * 100,indexInTreeList);
             }
         }
 

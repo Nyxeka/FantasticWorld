@@ -10,6 +10,7 @@ namespace nyxeka
         public string dir;
         public string sliderID;
         public object value;
+        public int indexInCompleteList;
 
         public SliderIndexInfo(string dir, string sliderID, object value)
         {
@@ -17,7 +18,14 @@ namespace nyxeka
             this.dir = dir;
             this.sliderID = sliderID;
             this.value = value;
+            indexInCompleteList = 0;
 
+        }
+
+        public SliderIndexInfo SetIndex(int newIndex)
+        {
+            indexInCompleteList = newIndex;
+            return this;
         }
 
     }
@@ -29,7 +37,7 @@ namespace nyxeka
 
         public Dictionary<string, SliderNode> sliderNodeList;
 
-        private List<SliderIndexInfo> completeSliderList;
+        private List<Slider> completeSliderList;
 
         private string versionHash;
 
@@ -54,12 +62,12 @@ namespace nyxeka
         }
 
         /// <summary>
-        /// Not sure if we're gonna need this yet. Best if left empty and un-used for now. May depricate later.
+        /// Update the Tree's list of references to sliders.
         /// </summary>
-        private void UpdateCompleteSliderList()
+        public List<Slider> GetCompleteSliderList()
         {
 
-            completeSliderList = GetCompleteSliderList();
+            return completeSliderList;
 
         }
 
@@ -70,10 +78,10 @@ namespace nyxeka
         /// Iterative creation of a list by walking through each subnode and adding it to a list. Returns the complete list in SliderIndexInfo struct format.
         /// </summary>
         /// <returns></returns>
-        public List<SliderIndexInfo> GetCompleteSliderList()
+        public void UpdateCompleteSliderList()
         {
 
-            List<SliderIndexInfo> newList = new List<SliderIndexInfo>();
+            List<Slider> newList = new List<Slider>();
 
             // build the list:
 
@@ -88,13 +96,13 @@ namespace nyxeka
                     // loop body goes here
 
                     //create the list from each subnode
-                    List<SliderIndexInfo> listFromNode = value.GetCompleteSliderList();
+                    List<Slider> listFromNode = value.CreateAndReturnCompleteSliderList();
 
                     // then, add the objects from the list to our big list.
                     for (int i = 0; i < listFromNode.Count; i++)
                     {
 
-                        newList.Add(listFromNode[i]);
+                        newList.Add(listFromNode[i].SetIndexInTree(i));
 
                     }
 
@@ -111,7 +119,7 @@ namespace nyxeka
                 enumerator.Dispose();
             }
 
-            return newList;
+            completeSliderList = newList;
 
         }
 
@@ -177,19 +185,14 @@ namespace nyxeka
 
         }
 
-        public Slider GetSliderAtDir(string dir)
-        {
-
-            return null;
-
-        }
+        //public Slider GetSliderAtDir(string dir){return null;}
 
         /// <summary>
         /// Set the value of a slider at the specified directory. Need to update this so that the "level" int is in a separate private recursive function.
         /// </summary>
         /// <param name="sliderIndex"></param>
         /// <param name="level"></param>
-        public void SetSliderAtDir(SliderIndexInfo sliderIndex, int level = 0)
+        public void SetSliderAtDir(Slider sliderIndex, int level = 0)
         {
 
             // get the DIR, the ID of the slider, and the value of the slider.
@@ -218,7 +221,7 @@ namespace nyxeka
                 if (sliderNodeList.TryGetValue(sliderIndex.sliderID, out outValue))
                 {
 
-                    outValue.SetSliderValue(sliderIndex.sliderID, sliderIndex.value);
+                    outValue.SetSliderValue(sliderIndex.sliderID, sliderIndex.sliderValue);
 
                 }
 

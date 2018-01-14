@@ -182,8 +182,13 @@ namespace nyxeka
 
                 }
 
-                zoom -= Input.GetAxis("Mouse ScrollWheel");
+                
 
+            }
+
+            if (!EventSystem.current.IsPointerOverGameObject())
+            {
+                zoom -= Input.GetAxis("Mouse ScrollWheel");
             }
 
             // then, we're going to clamp the variables to their rotations, mins and maxes

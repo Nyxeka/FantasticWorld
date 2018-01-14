@@ -16,6 +16,8 @@ namespace nyxeka
 
         public bool hasNegative;
 
+        public int indexInTree;
+
         public Slider(object sliderValue, string sliderName = "un-named slider", string sliderID = "", string dir = "")
         {
             this.sliderName = sliderName;
@@ -23,6 +25,13 @@ namespace nyxeka
             this.sliderValue = sliderValue;
             this.dir = dir;
         }
+
+        public Slider SetIndexInTree(int newIndex)
+        {
+            indexInTree = newIndex;
+            return this;
+        }
+
     }
 
 }

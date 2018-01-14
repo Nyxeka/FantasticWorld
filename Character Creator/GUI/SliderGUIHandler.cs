@@ -33,6 +33,8 @@ namespace nyxeka
         [HideInInspector]
         public bool mouseOnGUI;
 
+        public bool mouseHoverGUI;
+
         private bool clickingOnSlider;
 
         private bool clickingOnBackground;
@@ -67,6 +69,7 @@ namespace nyxeka
                     mouseOnGUI = false;
                 }
             }
+
             if (Input.GetMouseButtonUp(0))
             {
                 mouseOnGUI = false;
@@ -107,91 +110,23 @@ namespace nyxeka
                         {
                             if (curSliderNode.sliderNodeList.Count > 0)
                             {
+                                CreateSlidersFromGroup(false, ref curSliderNode, ref groupContainers[i], curDir, curNodeName, layer);
                                 CreateSliderGroupTree(curSliderNode.sliderNodeList, curDir + curNodeName + "/", 1, groupContainers[i]);
+                                //curGroup.AddSliderGroup(sliderGroupPrefab, curDir + curNodeName + "/", curNodeName).SetSliders(sliderHandlerList.ToArray(), modifyWindow)
                             }
 
                             i++;
                         }
                     }else
                     {
-                        
-                        if (curSliderNode.sliderNodeList.Count > 0)
+                        if (curSliderNode.sliderNodeList.Count > 0)// if the slider node list has sub slider groups...
                         {
-                            //create the sliders first.
-                            /*List<SliderHandler> sliderHandlerList = new List<SliderHandler>();
-                            //create the list of sliders from the current slider group.
-                            var enum2 = curSliderNode.sliderList.GetEnumerator();
-                            try
-                            {
-                                while (enum2.MoveNext())
-                                {
-                                    Slider s = enum2.Current.Value;
-                                    string _sName = enum2.Current.Key;
-                                    if (s.sliderID.Contains(M3DHandler._neg))
-                                        continue;
-                                    if (curSliderNode.sliderList.ContainsKey(s.sliderName + M3DHandler._neg))
-                                    {
-                                        Slider _temp;
-                                        if (curSliderNode.sliderList.TryGetValue(s.sliderName + M3DHandler._neg, out _temp))
-                                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, true, (float)s.sliderValue - (float)_temp.sliderValue));
-                                        else 
-                                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, true, (float)s.sliderValue));
-                                    } else
-                                    {
-                                        sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID,s.sliderName, false, (float)s.sliderValue));
-                                    }
-                                    //Debug.Log("Created a Slider.");
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.Log(e.ToString());
-                            }
-                            finally
-                            {
-                                enum2.Dispose();
-                            }
-                            CreateSliderGroupTree(curSliderNode.sliderNodeList, curDir + curNodeName + "/", layer+1,curGroup.AddSliderGroup(sliderGroupPrefab, curDir + curNodeName + "/", curNodeName, curSliderNode.sliderNodeList.Count).SetSliders(sliderHandlerList.ToArray(), modifyWindow));
-                            sliderHandlerList.Clear();// */
                             CreateSlidersFromGroup(true, ref curSliderNode, ref curGroup, curDir, curNodeName, layer);
                         } else
                         {
                             CreateSlidersFromGroup(false, ref curSliderNode, ref curGroup, curDir, curNodeName, layer);
-                            /*List<SliderHandler> sliderHandlerList = new List<SliderHandler>();
-                            //create the list of sliders from the current slider group.
-                            var enum2 = curSliderNode.sliderList.GetEnumerator();
-                            try
-                            {
-                                while (enum2.MoveNext())
-                                {
-                                    Slider s = enum2.Current.Value;
-                                    string _sName = enum2.Current.Key;
-                                    if (s.sliderID.Contains(M3DHandler._neg))
-                                        continue;
-                                    if (curSliderNode.sliderList.ContainsKey(s.sliderID + M3DHandler._neg))
-                                    {
-                                        sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, true, (float)s.sliderValue));
-                                    }else
-                                    {
-                                        sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, false, (float)s.sliderValue));
-                                    }
-                                    //Debug.Log("Created a Slider.");
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Debug.Log(e.ToString());
-                            }
-                            finally
-                            {
-                                enumerator.Dispose();
-                            }
-                            curGroup.AddSliderGroup(sliderGroupPrefab, curDir + curNodeName + "/", curNodeName).SetSliders(sliderHandlerList.ToArray(),modifyWindow);
-                            sliderHandlerList.Clear();//  */
                         }
                     }
-
-
                 }
             }
             catch (Exception e)
@@ -207,10 +142,10 @@ namespace nyxeka
 
         }
 
-        private void CreateSlidersFromGroup(bool isTab, ref SliderNode curSliderNode, ref SliderGroupContainer curGroup, string curDir, string curNodeName, int layer)
+        private void CreateSlidersFromGroup(bool hasChildren, ref SliderNode curSliderNode, ref SliderGroupContainer curGroup, string curDir, string curNodeName, int layer, bool tab = false)
         {
             List<SliderHandler> sliderHandlerList = new List<SliderHandler>();
-            //create the list of sliders from the current slider group.
+            //create the list of sliders from the current slider group and add them to the modify window.
             var enum2 = curSliderNode.sliderList.GetEnumerator();
             try
             {
@@ -224,13 +159,13 @@ namespace nyxeka
                     {
                         Slider _temp;
                         if (curSliderNode.sliderList.TryGetValue(s.sliderName + M3DHandler._neg, out _temp))
-                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, true, (float)s.sliderValue - (float)_temp.sliderValue));
+                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, true, (float)s.sliderValue - (float)_temp.sliderValue, s.indexInTree, _temp.indexInTree));
                         else
-                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, true, (float)s.sliderValue));
+                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, true, (float)s.sliderValue, s.indexInTree));
                     }
                     else
                     {
-                        sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, false, (float)s.sliderValue));
+                        sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, false, (float)s.sliderValue, s.indexInTree));
                     }
                     //Debug.Log("Created a Slider.");
                 }
@@ -243,36 +178,30 @@ namespace nyxeka
             {
                 enum2.Dispose();
             }
-            if (isTab)
+
+            if (hasChildren)// if it has children, start creating a list of slider-groups under the current directory, after adding the sliders to the modify window.
                 CreateSliderGroupTree(curSliderNode.sliderNodeList, curDir + curNodeName + "/", layer + 1, curGroup.AddSliderGroup(sliderGroupPrefab, curDir + curNodeName + "/", curNodeName, curSliderNode.sliderNodeList.Count).SetSliders(sliderHandlerList.ToArray(), modifyWindow));
-            else
+            else //just add the sliders to the modify window.
                 curGroup.AddSliderGroup(sliderGroupPrefab, curDir + curNodeName + "/", curNodeName).SetSliders(sliderHandlerList.ToArray(), modifyWindow);
             sliderHandlerList.Clear();
         }
 
         public void SetTree(SliderTree newTree)
         {
-
             tree = newTree;
             if (tree != null)
             {
-                //ready = true;
                 CreateSliderGroupTree(tree.sliderNodeList);
-                //Debug.Log("Number of recursions: " + FindObjectsOfType<SliderGroupHandler>().Length);
             }
             else
             {
-
                 Debug.Log("<color=red>Tree loaded but still null!</color>");
-
             }
         }
 
         public SliderTree GetTree()
         {
-
             return tree;
-
         }
         
 
