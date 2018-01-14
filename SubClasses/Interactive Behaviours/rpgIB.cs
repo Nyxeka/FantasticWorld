@@ -141,9 +141,12 @@ namespace nyxeka
 
             if (Input.GetButtonDown("Jump"))
             {
-
                 unit.GiveActionCommandFlush(new cmdAction(Action.Jump));
+            }
 
+            if (Input.GetButtonDown("Crouch"))
+            {
+                unit.GiveActionCommandFlush(new cmdAction(Action.Crouch));
             }
 
             /*if (Input.GetButtonDown("Fire1"))
@@ -237,7 +240,7 @@ namespace nyxeka
 
             // here we move the newCamOffset to the players position.
 
-            oldUnitPos = Vector3.SmoothDamp(oldUnitPos, unit.transform.position, ref currentVelocityRef, unitSpeedToCamLag.Evaluate(unit.GetSpeedPercent()), Mathf.Infinity, Time.fixedDeltaTime);
+            oldUnitPos = Vector3.SmoothDamp(oldUnitPos, unit.transform.position, ref currentVelocityRef, smoothTime, Mathf.Infinity, Time.fixedDeltaTime);
 
             newCamOffset = newCamOffset + (oldUnitPos + camTargetOffset + (curCamHeightOffset * Vector3.up));
 
@@ -285,41 +288,21 @@ namespace nyxeka
         /// </summary>
         public override void RunBehaviour()
         {
-
+            //reset command
             targetVelocity = Vector3.zero;
-
-            //base.RunBehaviour();
 
             sprintAmount = Input.GetAxis("Sprint");
 
             unit.GiveCommand(new cmdFloat("Sprint", sprintAmount));
-
-            //for now, we just want to translate wasd to move character in said direction.
-            //We want to get vertical and horizontal 
-            //we can decide in here to add the force relative to the camera rotation. 
-
+            
             targetVelocity = new Vector3(Input.GetAxis("Horizontal"), 0.0f,Input.GetAxis("Vertical"));
 
-            /*if (targetVelocity.magnitude > 1.0f)
-            {
-
-                targetVelocity.Normalize();
-
-            }*/
-
-            targetVelocity *= (joyStickToMovement.Evaluate(targetVelocity.magnitude));
-
             targetVelocity = getCameraRotOffsetY() * targetVelocity;
-
             
-
-
-            targetVelocity = targetVelocity * walkSpeed;
-
+            targetVelocity = targetVelocity * (walkSpeed + sprintAmount);
+            //give command
             unit.GiveCommand(new cmdMove(targetVelocity));
-
-
-
+            
         }
 
         public override void ExitIB()
