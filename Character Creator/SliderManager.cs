@@ -9,7 +9,7 @@ namespace nyxeka
     public class SliderManager : MonoBehaviour
     {
 
-        public static SliderManager mInstance;
+        public static SliderManager instance = null;
 
         public SliderTree tree;
 
@@ -21,14 +21,19 @@ namespace nyxeka
 
         private int batchSize = 20;
 
+        private bool initialized = false;
+
         public void InitSliderManager(SliderGUIHandler sliderGUIHandler, DatabaseReader dbReader)
         {
+            if (!initialized)
+            {
+                this.sliderGUIHandler = sliderGUIHandler;
+                this.dbReader = dbReader;
 
-            this.sliderGUIHandler = sliderGUIHandler;
-            this.dbReader = dbReader;
-
-            //tree = m3DHandler.morphSliderTree;
-            InitSliderGUIHandler();
+                //tree = m3DHandler.morphSliderTree;
+                InitSliderGUIHandler();
+                initialized = true;
+            }
 
         }
 
@@ -48,15 +53,6 @@ namespace nyxeka
 
             sliderGUIHandler.SetTree(tree);
 
-            if (sliderGUIHandler)
-            {
-                if (sliderGUIHandler.CheckDelegateNull())
-                {
-                    SliderGUIHandler.MorphSliderUpdateDelegate += UpdateM3D;
-                    Debug.Log("Assigned slider to morph update delegate.");
-                }
-            }
-
             LoadTreeToChar();
 
         }
@@ -64,55 +60,36 @@ namespace nyxeka
 
         void Awake()
         {
-            mInstance = this;
+            instance = this;
         }
 
         void OnDestroy()
         {
-            mInstance = null;
+            instance = null;
         }
 
-        public static void UpdateSlider(string sliderID, float newValue, int index)
+        public static void UpdateSlider(Slider newSliderData)
         {
-            if (mInstance != null)
+            if (instance != null)
             {
-                mInstance.tree.GetCompleteSliderList()[index].sliderValue = newValue;
-                M3DHandler.UpdateSlider(sliderID, newValue);
+                instance.tree.SetSliderAtDir(newSliderData);
+                M3DHandler.UpdateSlider(newSliderData.sliderID, Convert.ToSingle(newSliderData.sliderValue));
             }
         }
 
-        public static bool UpdateSliderCheck(string sliderID, float value, int index)
+        public static bool UpdateSliderCheck(Slider newSliderData)
         {
-            if (mInstance != null)
+            if (instance != null)
             {
-                if(M3DHandler.UpdateSliderCheck(sliderID, value))
+                if(M3DHandler.UpdateSliderCheck(newSliderData.sliderID, Convert.ToSingle(newSliderData.sliderValue)))
                 {
-                    mInstance.tree.GetCompleteSliderList()[index].sliderValue = value;
+                    instance.tree.SetSliderAtDir(newSliderData);
                     return true;
                 }
                 
             }
 
             return false;
-        }
-
-        public void UpdateM3D(string sliderID, float newValue)
-        {
-
-            // update the tree in M3DHandler slider tree.
-            //Debug.Log("Updating morph");
-
-            M3DHandler.UpdateSlider(sliderID, newValue);
-
-            //Debug.Log("<color=green>Updated morph</color>");
-
-        }
-
-        public void Cleanup()
-        {
-
-            SliderGUIHandler.MorphSliderUpdateDelegate -= UpdateM3D;
-
         }
 
         IEnumerator UpdateMorphs()
@@ -130,16 +107,13 @@ namespace nyxeka
                 int count = 0;
                 for (int i = 0; i < sliderList.Count; i++)
                 {
-
                     Type sliderType = sliderList[i].sliderValue.GetType();
 
-                    if (sliderType == typeof(float) || sliderType == typeof(int) || sliderType == typeof(System.Single))
+                    if (sliderType == typeof(float) || sliderType == typeof(int))
                     {
-                        if (M3DHandler.UpdateSliderCheck(sliderList[i].sliderID, (float)sliderList[i].sliderValue))
+                        if (M3DHandler.UpdateSliderCheck(sliderList[i].sliderID, Convert.ToSingle( sliderList[i].sliderValue)))
                         {
-
                             count++;
-
                         }
 
                     }
@@ -172,25 +146,28 @@ namespace nyxeka
 
         public static void SaveCurrentCharacter()
         {
-            mInstance.SaveMorphs();
+            if (instance != null)
+                instance.SaveMorphs();
         }
 
         public void SaveMorphs()
         {
             if (!busy)
             {
-                tree = sliderGUIHandler.GetTree();
-
+                //tree = sliderGUIHandler.GetTree();
+                
                 if (tree != null)
                 {
+
+                    //PublicToastHandler.GiveMessage("Updated Sliders: " + tree.GetCompleteSliderList().Count);
+
                     if (tree.sliderNodeList.Count > 0)
                     {
-                        PublicLoadingBar.AddNewStuff(1, 5);
                         dbReader.SaveSliderTree(tree);
-                        PublicLoadingBar.UpdateProgress(1);
                     }
 
                     Debug.Log("<color=blue> Successfully saved character to file.</color>");
+                    PublicToastHandler.GiveMessage("Saved Morphs.");
                 }
 
                 else
@@ -213,8 +190,6 @@ namespace nyxeka
         void OnDisable()
         {
             SaveMorphs();
-            Cleanup();
-            Debug.Log("Cleaned up Delegates.");
 
         }
     }

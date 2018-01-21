@@ -11,7 +11,7 @@ public class FacialExpression : MonoBehaviour {
 
     public AnimationCurve eyeRotToLid;
 
-    private M3DCharacterManager manager;
+    private MORPH3D.M3DCharacterManager manager;
 
     // Use this for initialization
     void Start()

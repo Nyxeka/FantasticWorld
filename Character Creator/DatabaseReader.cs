@@ -12,7 +12,7 @@ namespace nyxeka
         public string defaultSliderTreePath = "Characters/default.fwc";
 
         private string defaultTreePath;
-
+        [HideInInspector]
         public bool isInitialized = false;
 
         // Use this for initialization

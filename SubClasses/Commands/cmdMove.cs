@@ -28,7 +28,14 @@ namespace nyxeka
 
         public override Vector3 getCommandVector()
         {
-            return (velocityData != null ? velocityData : Vector3.zero);
+            if (velocityData == null)
+            {
+                return Vector3.zero; 
+            }
+            else
+            {
+                return velocityData;
+            }
         }
     }
 }

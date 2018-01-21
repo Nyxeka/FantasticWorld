@@ -27,31 +27,16 @@ namespace nyxeka
 
         public Vector2 scrollPosition = Vector2.zero;
 
-        public delegate void updateSlider(string sliderID, float newValue);
-        public static event updateSlider MorphSliderUpdateDelegate;
-
         [HideInInspector]
         public bool mouseOnGUI;
 
         public bool mouseHoverGUI;
-
-        private bool clickingOnSlider;
-
-        private bool clickingOnBackground;
 
         public RectTransform sliderWindowToRefresh;
 
         public ModifyWindow modifyWindow;
 
         int numTimes = 0;
-
-        internal bool CheckDelegateNull()
-        {
-            if (MorphSliderUpdateDelegate == null)
-                return true;
-            else
-                return false;
-        }
 
         public void Update()
         {
@@ -147,25 +132,29 @@ namespace nyxeka
             List<SliderHandler> sliderHandlerList = new List<SliderHandler>();
             //create the list of sliders from the current slider group and add them to the modify window.
             var enum2 = curSliderNode.sliderList.GetEnumerator();
+            Slider s = null;
             try
             {
                 while (enum2.MoveNext())
                 {
-                    Slider s = enum2.Current.Value;
+                    s = enum2.Current.Value;
                     string _sName = enum2.Current.Key;
                     if (s.sliderID.Contains(M3DHandler._neg))
                         continue;
-                    if (curSliderNode.sliderList.ContainsKey(s.sliderName + M3DHandler._neg))
+                    if (curSliderNode.sliderList.ContainsKey(s.sliderName + M3DHandler._neg)) // does the slider have a negative counterpart?
                     {
+                        //Debug.Log("Found negative for slider: " + s.sliderName);
                         Slider _temp;
-                        if (curSliderNode.sliderList.TryGetValue(s.sliderName + M3DHandler._neg, out _temp))
-                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, true, (float)s.sliderValue - (float)_temp.sliderValue, s.indexInTree, _temp.indexInTree));
-                        else
-                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, true, (float)s.sliderValue, s.indexInTree));
+                        
+                        if (curSliderNode.sliderList.TryGetValue(s.sliderName + M3DHandler._neg, out _temp)) //access the _temp value.
+                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s, _temp, Convert.ToSingle(s.sliderValue) - Convert.ToSingle(_temp.sliderValue)));
+                        else// temp value doesn't exist, skipping.
+                            sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s, Convert.ToSingle(s.sliderValue)));
+                        //Debug.Log("negative slider name: " + _temp.sliderName);
                     }
                     else
                     {
-                        sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s.sliderID, s.sliderName, false, (float)s.sliderValue, s.indexInTree));
+                        sliderHandlerList.Add(modifyWindow.AddSlider(curGroup, s, Convert.ToSingle(s.sliderValue)));
                     }
                     //Debug.Log("Created a Slider.");
                 }
@@ -173,6 +162,8 @@ namespace nyxeka
             catch (Exception e)
             {
                 Debug.Log(e.ToString());
+                Debug.Log(s.sliderValue.GetType().ToString());
+                
             }
             finally
             {

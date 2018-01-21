@@ -43,8 +43,8 @@ namespace nyxeka
 
         private Vector3 velocity;
 
-        public FullBodyBipedIK ikMod;
-
+        private GroundCheck groundChecker;
+        
         public Transform lookAtBeacon;
 
         public Vector3 beaconOffset;
@@ -82,6 +82,8 @@ namespace nyxeka
 
         private float xRotOffset2 = 0.0f;
 
+        public FullBodyBipedIK ikMod;
+
         public LookAtIK lookIK;
 
         private GrounderFBBIK groundIK;
@@ -105,72 +107,44 @@ namespace nyxeka
 
             controller = gameObject.GetComponent<CharacterController>();
 
+            groundChecker = gameObject.GetComponentInChildren<GroundCheck>();
+
             lookAtVector = Vector3.forward;
 
             actionQueue = new Queue<Command>();
 
             groundIK = GetComponentInChildren<GrounderFBBIK>();
-        }
 
-        /// <summary>
-        /// clamps a float between two values, wrapping it if it goes over
-        /// </summary>
-        /// <param name="toChange">float to wrap</param>
-        /// <param name="min">min wrap value</param>
-        /// <param name="max">max wrap value</param>
-        /// <param name="offsetDelta">amount to add or substract to wrap</param>
-        /// <returns></returns>
-        float ClampFloatOffset(float toChange, float min, float max, float offsetDelta)
-        {
-
-            float newOffset = toChange;
-
-            if (newOffset > max)
-            {
-
-                newOffset -= offsetDelta;
-
-            }
-            if (newOffset < min)
-            {
-
-                newOffset += offsetDelta;
-
-            }
-
-            return newOffset;
-
+            groundIK.enabled = false;
+            lookIK.enabled = false;
+            ikMod.enabled = false;
         }
 
         void FixedUpdate()
         {
-            if (controlsActive)
-            {
-
-                switch (currentUnitMoveType)
-                {
-                    case UnitMovementType.CharacterController:
-                        HandleMovementCharController();
-                        break;
-                    case UnitMovementType.NavMeshAgent:
-                        HandleMovementNavMeshAgent();
-                        break;
-                    case UnitMovementType.Rigidbody:
-                        HandleMovementRB();
-                        break;
-                }
-            } else
-            {
-                //StillLookAt();
-            }
             UpdateAnim();
-            UpdateVel(Time.fixedDeltaTime);
+            UpdateIK();
+        }
+
+        void UpdateIK()
+        {
+            ikMod.solver.Update();
+            groundIK.solver.Update();
+            lookIK.solver.Update();
+        }
+
+        private void Update()
+        {
+            
+
         }
 
         public override void SetPhysicsActive()
         {
             controlsActive = true;
-
+            if (rb != null)
+                rb.isKinematic = false;
+            anim.applyRootMotion = true;
             unitClampLookAtAngle = unitRunningLookAtAngle;
 
         }
@@ -178,7 +152,9 @@ namespace nyxeka
         public override void SetPhysicsInactive()
         {
             controlsActive = false;
-
+            if (rb != null)
+                rb.isKinematic = true;
+            anim.applyRootMotion = false;
             targetVelocity = Vector3.zero;
 
             transform.rotation = Quaternion.Euler(Vector3.zero);
@@ -221,13 +197,13 @@ namespace nyxeka
             xRotUpHillOffset = angle;
         }
 
-        /*private void RunLookAt()
+        private void RunLookAt()
         {
 
             if (lookAtBeacon)
             {
                 Vector3 newLookAtOffset = beaconOffset;
-                Quaternion lookAtRotation = Quaternion.AngleAxis(Mathf.Clamp(targetRotOffset, -90, 90), Vector3.up);
+                Quaternion lookAtRotation = Quaternion.AngleAxis(Mathf.Clamp(inputAngle, -90, 90), Vector3.up);
 
                 newLookAtOffset = (lookAtRotation * transform.rotation) * newLookAtOffset;
 
@@ -256,7 +232,7 @@ namespace nyxeka
                 }
             }
 
-        }*/
+        }// */
 
         private void HandleTurningCharController()
         {
@@ -279,14 +255,17 @@ namespace nyxeka
 
         private void RotateTowardsTargetDirection()
         {
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(targetVelocity), 2.0f * Time.fixedDeltaTime);
+            if (targetVelocity != Vector3.zero)
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(targetVelocity), 2.0f * Time.fixedDeltaTime);
+        }
+
+        private void HandleGravity()
+        {
+            
         }
 
         private void UpdateAnim()
         {
-
-            //rawInputAngle = 
-
             facingDirectionAngle = transform.rotation.eulerAngles.y;
 
             inputAngle = Vector3.SignedAngle((Quaternion.AngleAxis(facingDirectionAngle, Vector3.up) * Vector3.forward), targetVelocity, Vector3.up);
@@ -316,35 +295,68 @@ namespace nyxeka
                 isRU = true;
             }
 
-
+            if (actionQueue.Count > 0)
+            {
+                if (actionQueue.Peek().getAction() == Action.Crouch)
+                {
+                    actionQueue.Dequeue();
+                    crouchToggle = !crouchToggle;
+                }
+                /*if (actionQueue.Peek().getAction() == Action.Jump)
+                {
+                    actionQueue.Dequeue();
+                    isJumping = !isJumping;
+                }*/
+            }
 
             //so, we have target velocity.
             //let's check our current rotation.
-
+            
             anim.SetFloat("InputMagnitude", inputMagnitude);
             anim.SetFloat("InputAngle", inputAngle);
             anim.SetFloat("RawInputAngle", rawInputAngle);
             anim.SetFloat("WalkStartAngle", walkStartAngle);
             anim.SetFloat("WalkStopAngle", walkStopAngle);
             anim.SetFloat("SprintFactor", sprintAmount);
-            anim.SetFloat("curMagnitude", new Vector3(curVel.x, 0.0f, curVel.z).magnitude);
+            //anim.SetFloat("curMagnitude", new Vector3(curVel.x, 0.0f, curVel.z).magnitude);
             anim.SetFloat("FallingTime", fallingTime);
             anim.SetFloat("IsRU", isRU ? 1 : 0);
 
             anim.SetBool("IsJump", isJumping);
             anim.SetBool("IsFalling", isFalling);
             anim.SetBool("IsCrouch", crouchToggle);
+            isFalling = false;
 
-        }
+            
 
-        private void UpdateVel(float timeScale)
-        {
-            oldVel = curVel;
+            if (groundChecker != null && controlsActive)
+            {
+                
 
-            curVel = (transform.position - oldPos) / timeScale;
-            //curVel.y = 0.0f;
+                if (!groundChecker.isGrounded)
+                {
+                    isFalling = true;
+                    fallingTime += Time.fixedDeltaTime;
+                }else
+                {
+                    fallingTime = 0;
+                    anim.SetFloat("FloorAngle", groundChecker.groundAngle);
+                }
 
-            oldPos = transform.position;
+            }
+
+            if (inputMagnitude > 0.15f)
+            {
+                RunLookAt();
+            }
+            else
+            {
+                StillLookAt();
+            }
+
+            //anim.SetBool("IsFalling", !controller.isGrounded);
+            //anim.SetFloat("FloorAngle", controller.);
+
         }
 
         public override void GiveCommand(Command newCMD)

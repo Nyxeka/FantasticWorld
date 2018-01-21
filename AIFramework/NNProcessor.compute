@@ -1,0 +1,35 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel NNAddWeights1024
+#pragma kernel NNSumWeights256
+#pragma kernel NNCreateOutput
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+RWTexture2D<float4> Result;
+RWTexture2D<float4> weightValues;
+RWTexture2D<float4> weightedValues; //256x1024 texture.
+
+//dispatch with 1,4,64
+[numthreads(8, 8, 16)]
+void NNAddWeights1024(uint3 id : SV_DispatchThreadID) {
+
+    weightedValues[uint2(id.x * id.y, id.z)] = ((Result[id.xy] + weightValues[uint2(id.x * id.y, id.z)]) + (Result[uint2(id.x + 8, id.y)] + weightValues[uint2((id.x + 8) * id.y, id.z)]) + (Result[uint2(id.x + 16, id.y)] + weightValues[uint2((id.x + 16) * id.y, id.z)]) + (Result[uint2(id.x + 24,id.y)] + weightValues[uint2((id.x + 24) * id.y, id.z)])) / float4(4, 4, 4, 4);
+}
+// id.x, id.y and id.z, respectively:
+///dispatch with 16,64,1
+[numthreads(8, 16, 8)]
+void NNSumWeights256(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x < (256 >> id.z))
+    {
+        weightedValues[id.xy] = ((weightedValues[uint2(id.x, id.y)] + weightedValues[uint2(id.x + (256 >> id.z), id.y)])) / 2;
+        GroupMemoryBarrierWithGroupSync();
+    }
+
+}
+
+[numthreads(32,32,1)]
+void NNCreateOutput(uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = weightedValues[uint2(0,id.x * id.y)];
+}

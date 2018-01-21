@@ -4,31 +4,6 @@ using UnityEngine;
 
 namespace nyxeka
 {
-    public struct SliderIndexInfo
-    {
-
-        public string dir;
-        public string sliderID;
-        public object value;
-        public int indexInCompleteList;
-
-        public SliderIndexInfo(string dir, string sliderID, object value)
-        {
-
-            this.dir = dir;
-            this.sliderID = sliderID;
-            this.value = value;
-            indexInCompleteList = 0;
-
-        }
-
-        public SliderIndexInfo SetIndex(int newIndex)
-        {
-            indexInCompleteList = newIndex;
-            return this;
-        }
-
-    }
 
     public class SliderTree
     {
@@ -71,16 +46,28 @@ namespace nyxeka
 
         }
 
+        public void SetSliderInSliderList(int index, float value)
+        {
+            if (completeSliderList != null)
+            {
+                if (index < completeSliderList.Count)
+                {
+                    Debug.Log("Updating Slider at index: " + index);
+                    SetSliderAtDir(completeSliderList[index]);
+                }
+            }
+        }
+
         // to-do: add function that lets us grab values from the tree and write values to the tree, with a provided DIR.
         // also need to be able to get a list of all subnodes, or a list of subnodes in a specific DIR.
 
         /// <summary>
-        /// Iterative creation of a list by walking through each subnode and adding it to a list. Returns the complete list in SliderIndexInfo struct format.
+        /// Iterative creation of a list by walking through each subnode and adding it to a list. Returns the list of Sliders.
         /// </summary>
         /// <returns></returns>
         public void UpdateCompleteSliderList()
         {
-
+            
             List<Slider> newList = new List<Slider>();
 
             // build the list:
@@ -194,7 +181,6 @@ namespace nyxeka
         /// <param name="level"></param>
         public void SetSliderAtDir(Slider sliderIndex, int level = 0)
         {
-
             // get the DIR, the ID of the slider, and the value of the slider.
 
             // so, first we need to pass this onto the appropriate slider node.
@@ -203,19 +189,22 @@ namespace nyxeka
 
             if (dirSplit.Length > level + 1)
             {
-
+                
                 SliderNode outValue;
                 if (sliderNodeList.TryGetValue(sliderIndex.sliderID, out outValue))
                 {
-
+                    Debug.Log("Setting slider... " + sliderIndex.sliderName);
                     outValue.SetSliderAtDir(sliderIndex, level + 1);
 
+                } else
+                {
+                    Debug.Log("Slider does not exist in this node!");
                 }
 
             }
             else if (dirSplit.Length == level + 1)
             {
-
+                
                 //we're in this directory, so we're gonna be setting the slider here.
                 SliderNode outValue;
                 if (sliderNodeList.TryGetValue(sliderIndex.sliderID, out outValue))
@@ -225,7 +214,7 @@ namespace nyxeka
 
                 }
 
-            }
+            } 
         }
 
         /// <summary>

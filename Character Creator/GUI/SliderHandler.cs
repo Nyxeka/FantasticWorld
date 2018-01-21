@@ -9,22 +9,18 @@ namespace nyxeka
 
         public Text title;
 
-        public bool hasNegative;
-
-        public string sliderID;
-        
-        protected float sliderValue;
+        public bool hasNegative = false;
 
         public UnityEngine.UI.Slider _sliderInput;
+
+        public nyxeka.Slider _slider;
+        public nyxeka.Slider _sliderNeg;
 
         public bool locked = false;
 
         public SliderGroupContainer parentGroup;
 
         public ModifyWindow parentWindow;
-
-        public int indexInTreeList = 0;
-        public int negativeValueIndex = 0;
 
         private void Start()
         {
@@ -71,56 +67,58 @@ namespace nyxeka
             }
         }
 
-        public SliderHandler InitSliderHandler(ModifyWindow modifyWindow, SliderGroupContainer parentGroup, string sliderID, string newName, bool hasNegative, float defaultValue = 0)
+        public SliderHandler InitSliderHandler(ModifyWindow modifyWindow, SliderGroupContainer parentGroup, Slider _slider, float defaultValue = 0)
         {
             this.parentWindow = modifyWindow;
             this.parentGroup = parentGroup;
-            this.sliderID = sliderID;
-            this.hasNegative = hasNegative;
-            sliderValue = defaultValue/100;
-            _sliderInput.value = sliderValue;
-            title.text = newName;
-            if (hasNegative)
-            {
-                _sliderInput.minValue = -1;
-            } else
-            {
-                _sliderInput.minValue = 0;
-            }
+            this._slider = _slider;
+            this.hasNegative = false;
+            _sliderInput.value = defaultValue / 100;
+            title.text = _slider.sliderName;
+            _sliderInput.minValue = 0;
 
             return this;
         }
-
-        public SliderHandler SetIndexInTreeList(int newIndex, int newNegativeIndex = 0)
+        public SliderHandler InitSliderHandler(ModifyWindow modifyWindow, SliderGroupContainer parentGroup, Slider _slider, Slider _sliderNeg, float defaultValue = 0)
         {
-            indexInTreeList = newIndex;
-            negativeValueIndex = newNegativeIndex;
+            //Debug.Log("Creating Sliders with negative... " + _slider.sliderName);
+            this.parentWindow = modifyWindow;
+            this.parentGroup = parentGroup;
+            this._slider = _slider;
+            this._sliderNeg = _sliderNeg;
+            this.hasNegative = true;
+            _sliderInput.value = defaultValue / 100;
+            title.text = _slider.sliderName;
+            _sliderInput.minValue = -1;
+
             return this;
         }
 
         void UpdateM3DSlider(float value)
         {
-            //print("attempting to update slider value...");
-            //so, we get sliderID, check if negative. Then check if value is negative. Swap it to positive and apply.
+
             if (hasNegative)
             {
                 if (value < 0)
                 {
-                    SliderManager.UpdateSliderCheck(sliderID, 0, indexInTreeList);
-                    SliderManager.UpdateSlider(sliderID + M3DHandler._neg, Mathf.Abs(value*100), negativeValueIndex);
+                    _sliderNeg.sliderValue = Mathf.Abs(value * 100);
+                    _slider.sliderValue = 0;
                 } else if (value > 0)
                 {
-                    SliderManager.UpdateSlider(sliderID, value*100, indexInTreeList);
-                    SliderManager.UpdateSliderCheck(sliderID + M3DHandler._neg, 0, negativeValueIndex);
+                    _slider.sliderValue = value * 100;
+                    _sliderNeg.sliderValue = 0;
                 }
                 else//if value == 0
                 {
-                    SliderManager.UpdateSliderCheck(sliderID, 0, indexInTreeList);
-                    SliderManager.UpdateSliderCheck(sliderID + M3DHandler._neg, 0, negativeValueIndex);
+                    _slider.sliderValue = 0;
+                    _sliderNeg.sliderValue = 0;
                 }
+                SliderManager.UpdateSlider(_slider);
+                SliderManager.UpdateSlider(_sliderNeg);
             } else
             {
-                SliderManager.UpdateSlider(sliderID, value * 100,indexInTreeList);
+                _slider.sliderValue = value * 100;
+                SliderManager.UpdateSlider(_slider);
             }
         }
 

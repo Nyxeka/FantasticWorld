@@ -23,9 +23,9 @@ namespace nyxeka
     public class M3DHandler : MonoBehaviour
     {
 
-        private M3DCharacterManager manager;
+        private MORPH3D.M3DCharacterManager manager;
 
-        public SliderTree morphSliderTree;
+        //public SliderTree morphSliderTree;
 
         private bool safeToUpdateSliders = true;
 
@@ -36,15 +36,16 @@ namespace nyxeka
         private void Awake()
         {
             instance = this;
+            manager = gameObject.GetComponent<MORPH3D.M3DCharacterManager>();
         }
 
         // Use this for initialization
         void Start()
         {
-            print("initiated m3dhandler");
-            manager = gameObject.GetComponent<M3DCharacterManager>();
+            //print("initiated m3dhandler");
+            
 
-            morphSliderTree = new SliderTree();
+            //morphSliderTree = new SliderTree();
 
             // we create the tree from here, so we should be able to do a check to see if it's working and exists
             //LoadMorphCollection(Application.dataPath + "/MORPH3D/Content/M3DFemale/Figure/M3DFemale/MorphGroups.csv");
@@ -64,7 +65,7 @@ namespace nyxeka
         {
             
             yield return new WaitForSeconds(5.0f);
-            LoadMorphCollection(Application.dataPath + "/MORPH3D/Content/M3DFemale/Figure/M3DFemale/MorphGroups.csv");
+            //LoadMorphCollection(Application.dataPath + "/MORPH3D/Content/M3DFemale/Figure/M3DFemale/MorphGroups.csv");
 
         }
 
@@ -81,10 +82,16 @@ namespace nyxeka
             {
                 if (instance.safeToUpdateSliders)
                 {
-                    if (instance.manager.coreMorphs.morphLookup[sliderID].value != value)
+                    if (instance.manager != null)
                     {
-                        instance.manager.SetBlendshapeValue(sliderID, value);
-                        return true;
+                        if (instance.manager.coreMorphs.morphLookup[sliderID].value != value)
+                        {
+                            instance.manager.SetBlendshapeValue(sliderID, value);
+                            return true;
+                        }
+                    }else
+                    {
+                        Debug.Log("Null Manager????");
                     }
 
                 }
@@ -133,7 +140,7 @@ namespace nyxeka
                 }
             }
         }
-
+        /*
         /// <summary>
         /// This is solely for the purpose of generating a slider tree template using the .csv file that the MCS team provides with the MCS asson for unity.
         /// </summary>
@@ -192,14 +199,15 @@ namespace nyxeka
                 Debug.LogError("FILE IO ERROR WHEN LOADING SLIDER LIST FROM CSV: " + e.Message
                     + "\nSTACK TRACE: " + e.StackTrace
                     + "\nSOURCE: " + e.Source);
-                */
+                
                 Debug.LogError(e.ToString());
                 return false;
             }
 
             //return false;
 
-        }
+        } */
+
     }
 
 }

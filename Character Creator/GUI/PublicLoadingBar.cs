@@ -9,24 +9,27 @@ public class PublicLoadingBar : MonoBehaviour {
 
     public Image fillImage;
 
-    private int numStuffToLoad;
-    private int progress;
+    private int numStuffToLoad = 0;
+    private int progress = 0;
     private Queue<int> newStuffToAdd;
     private int newProgress = 0;
 
     private float maxTime = 0;
     private float timeAlive = 0;
+
+    private string loadingText = "Loading";
     
     [SerializeField]
     private Text updateText;
 
-    public static void AddNewStuff(int numNewStuff, float maxTime)
+    public static void AddNewStuff(int numNewStuff, float maxTime, string loadingText = "Loading")
     {
         if (instance != null)
         {
             instance.gameObject.SetActive(true);
             instance.newStuffToAdd.Enqueue(numNewStuff);
             instance.maxTime += maxTime;
+            instance.loadingText = loadingText;
             //Debug.Log("Added new set to loading bar!: " + numNewStuff);
         }
     }
@@ -39,78 +42,77 @@ public class PublicLoadingBar : MonoBehaviour {
 
     private void FinishLoading()
     {
-        if (instance != null)
-        {
-            //Debug.Log("The loading bar is done!");
-            instance.progress = 0;
-            instance.maxTime = 0;
-            instance.timeAlive = 0;
-            instance.SetLoadingBarFill(0);
-            instance.gameObject.SetActive(false);
-        }
+        progress = 0;
+        maxTime = 0;
+        timeAlive = 0;
+        SetLoadingBarFill(0);
+        newStuffToAdd.Clear();
+        numStuffToLoad = 0;
+        gameObject.SetActive(false);
     }
 
     private void Awake()
     {
-        if (PublicLoadingBar.instance == null)
+        if (instance == null)
         {
             instance = this;
-            instance.newStuffToAdd = new Queue<int>();
+            newStuffToAdd = new Queue<int>();
             //Debug.Log("Loaded loading bar!");
-            instance.gameObject.SetActive(false);
+            gameObject.SetActive(false);
         } else
         {
             GameObject.Destroy(this);
         }
     }
-
+    float progressPercent;
+    float timePercent;
     private void UpdateLoadingBarFill()
     {
-        if (instance != null)
+        if (numStuffToLoad == 0)
+            return;
+        progressPercent = progress / numStuffToLoad;
+        timePercent = timeAlive / maxTime;
+
+        SetLoadingBarFill(progressPercent > timePercent ? progressPercent : timePercent);
+
+        if (updateText != null)
         {
-            SetLoadingBarFill(Mathf.Clamp01(instance.progress / instance.numStuffToLoad));
-            if (instance.updateText != null)
-            {
-                instance.updateText.text = "Loading... (" + instance.progress.ToString() + "/" +  instance.numStuffToLoad + "), Time Loading: " + timeAlive.ToString("F2");
-                
-            }
+            updateText.text = loadingText + "... (" + progress.ToString() + "/" +  numStuffToLoad + "), Time " + loadingText + ": " + timeAlive.ToString("F2");
+            
         }
     }
 
     private void SetLoadingBarFill(float newAmount)
     {
-        if (instance != null)
-        {
-            if (instance.fillImage != null) {
-                instance.fillImage.fillAmount = newAmount;
-            }
+        if (fillImage != null) {
+            fillImage.fillAmount = newAmount;
         }
-    }
+}
 
     public void Update()
     {
         
-        if (instance.newStuffToAdd.Count > 0)
+        if (newStuffToAdd.Count > 0)
         {
-            instance.numStuffToLoad += instance.newStuffToAdd.Dequeue();
+            numStuffToLoad += newStuffToAdd.Dequeue();
         }
-        if (instance.newProgress > 0)
+        if (newProgress > 0)
         {
-            instance.progress += instance.newProgress;
+            progress += newProgress;
             newProgress = 0;
         }
-        if (instance.progress >= instance.numStuffToLoad)
+        if (progress >= numStuffToLoad)
         {
-            instance.FinishLoading();
+            FinishLoading();
         }
 
-        instance.timeAlive += Time.deltaTime;
+        timeAlive += Time.deltaTime;
 
-        if (instance.timeAlive >= instance.maxTime)
+        if (timeAlive >= maxTime)
         {
-            instance.FinishLoading();
+            FinishLoading();
         }
 
-        instance.UpdateLoadingBarFill();
+        UpdateLoadingBarFill();
     }
 }

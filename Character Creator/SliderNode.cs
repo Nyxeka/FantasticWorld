@@ -120,7 +120,11 @@ namespace nyxeka
             {
 
                 outValue.sliderValue = value;
+                Debug.Log("Setting slider: " + sliderID + " to value: " + value.ToString());
 
+            }else
+            {
+                Debug.Log("Slider does not exist in this node!");
             }
 
         }

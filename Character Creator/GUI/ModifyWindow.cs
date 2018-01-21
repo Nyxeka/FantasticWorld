@@ -9,9 +9,14 @@ namespace nyxeka
 
         public SliderHandler sliderPrefab;
 
-        public SliderHandler AddSlider(SliderGroupContainer parentGroup, string sliderID, string _name, bool hasNegative, float defaultValue,int indexInTreeList, int negativeIndex = 0)
+        public SliderHandler AddSlider(SliderGroupContainer parentGroup, Slider _slider, float defaultValue)
         {
-            return Instantiate(sliderPrefab,transform).InitSliderHandler(this, parentGroup,sliderID, _name,hasNegative, defaultValue).SetIndexInTreeList(indexInTreeList, negativeIndex);
+            return Instantiate(sliderPrefab, transform).InitSliderHandler(this, parentGroup, _slider, defaultValue);
+        }
+
+        public SliderHandler AddSlider(SliderGroupContainer parentGroup, Slider _slider, Slider _sliderNeg, float defaultValue)
+        {
+            return Instantiate(sliderPrefab, transform).InitSliderHandler(this, parentGroup, _slider, _sliderNeg, defaultValue);
         }
 
         public void SetActiveGroup(SliderGroupContainer newActiveGroup)
